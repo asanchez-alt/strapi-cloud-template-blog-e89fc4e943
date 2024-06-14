@@ -1,8 +1,6 @@
 "use strict";
 const bootstrap = require("./bootstrap");
 
-process.env.NODE_ENV=dev;
-
 module.exports = {
   /**
    * An asynchronous register function that runs before
