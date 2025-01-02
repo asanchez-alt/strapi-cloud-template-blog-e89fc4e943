@@ -12,11 +12,19 @@
   },
   "pluginOptions": {},
   "attributes": {
-    "name": {
-      "type": "string"
+    "title": {
+      "type": "string",
+      "required": true
     },
     "slug": {
-      "type": "uid"
+      "type": "uid",
+      "required": true
+    },
+    "short_description": {
+      "type": "text"
+    },
+    "description": {
+      "type": "blocks"
     },
     "articles": {
       "type": "relation",
@@ -24,8 +32,30 @@
       "target": "api::article.article",
       "mappedBy": "category"
     },
-    "description": {
-      "type": "text"
+    "icon": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "sub_categories": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::category.category"
+    },
+    "category_groups": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::category-group.category-group",
+      "inversedBy": "categories"
+    },
+    "content_classification": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::content-classification.content-classification",
+      "inversedBy": "categories"
     }
   }
 }

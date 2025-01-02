@@ -1,0 +1,27 @@
+{
+  "collectionName": "components_shared_contextual_messages",
+  "info": {
+    "displayName": "Contextual Message"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "message": {
+      "type": "text"
+    },
+    "state": {
+      "type": "enumeration",
+      "enum": [
+        "Danger",
+        "Warning",
+        "Neutral",
+        "Positive"
+      ],
+      "required": true,
+      "default": "Neutral"
+    }
+  }
+}

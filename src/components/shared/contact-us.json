@@ -1,0 +1,25 @@
+{
+  "collectionName": "components_shared_contact_uses",
+  "info": {
+    "displayName": "Contact Us"
+  },
+  "options": {},
+  "attributes": {
+    "icon": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
+    },
+    "title": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    }
+  }
+}

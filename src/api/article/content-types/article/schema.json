@@ -13,19 +13,26 @@
   "pluginOptions": {},
   "attributes": {
     "title": {
-      "type": "string"
+      "type": "string",
+      "required": true
     },
-    "description": {
+    "subtitle": {
       "type": "text",
       "maxLength": 80
     },
-    "slug": {
-      "type": "uid",
-      "targetField": "title"
+    "short_description": {
+      "type": "text",
+      "required": true
     },
-    "cover": {
+    "content_sections": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::content-section.content-section",
+      "mappedBy": "article"
+    },
+    "medias": {
       "type": "media",
-      "multiple": false,
+      "multiple": true,
       "required": false,
       "allowedTypes": [
         "images",
@@ -33,11 +40,11 @@
         "videos"
       ]
     },
-    "author": {
+    "topics": {
       "type": "relation",
-      "relation": "manyToOne",
-      "target": "api::author.author",
-      "inversedBy": "articles"
+      "relation": "manyToMany",
+      "target": "api::topic.topic",
+      "mappedBy": "articles"
     },
     "category": {
       "type": "relation",
@@ -45,14 +52,11 @@
       "target": "api::category.category",
       "inversedBy": "articles"
     },
-    "blocks": {
-      "type": "dynamiczone",
-      "components": [
-        "shared.media",
-        "shared.quote",
-        "shared.rich-text",
-        "shared.slider"
-      ]
+    "content_classification": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::content-classification.content-classification",
+      "inversedBy": "articles"
     }
   }
 }

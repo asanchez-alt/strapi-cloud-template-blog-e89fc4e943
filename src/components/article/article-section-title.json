@@ -1,0 +1,23 @@
+{
+  "collectionName": "components_article_article_section_titles",
+  "info": {
+    "displayName": "Article Section Title"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "url": {
+      "type": "string"
+    },
+    "icon": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
+    }
+  }
+}

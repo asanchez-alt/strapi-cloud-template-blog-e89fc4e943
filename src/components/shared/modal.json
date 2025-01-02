@@ -1,0 +1,26 @@
+{
+  "collectionName": "components_shared_modals",
+  "info": {
+    "displayName": "Modal"
+  },
+  "options": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "message": {
+      "type": "blocks"
+    },
+    "icon": {
+      "allowedTypes": [
+        "images"
+      ],
+      "type": "media",
+      "multiple": false
+    }
+  }
+}

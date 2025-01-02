@@ -512,6 +512,12 @@ export interface PluginContentReleasesRelease extends Schema.CollectionType {
   attributes: {
     name: Attribute.String & Attribute.Required;
     releasedAt: Attribute.DateTime;
+    scheduledAt: Attribute.DateTime;
+    timezone: Attribute.String;
+    status: Attribute.Enumeration<
+      ['ready', 'blocked', 'failed', 'done', 'empty']
+    > &
+      Attribute.Required;
     actions: Attribute.Relation<
       'plugin::content-releases.release',
       'oneToMany',
@@ -566,6 +572,7 @@ export interface PluginContentReleasesReleaseAction
       'manyToOne',
       'plugin::content-releases.release'
     >;
+    isEntryValid: Attribute.Boolean;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -781,39 +788,6 @@ export interface PluginI18NLocale extends Schema.CollectionType {
   };
 }
 
-export interface ApiAboutAbout extends Schema.SingleType {
-  collectionName: 'abouts';
-  info: {
-    singularName: 'about';
-    pluralName: 'abouts';
-    displayName: 'About';
-    description: 'Write about yourself and the content you create';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    title: Attribute.String;
-    blocks: Attribute.DynamicZone<
-      ['shared.media', 'shared.quote', 'shared.rich-text', 'shared.slider']
-    >;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::about.about',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::about.about',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
 export interface ApiArticleArticle extends Schema.CollectionType {
   collectionName: 'articles';
   info: {
@@ -826,25 +800,32 @@ export interface ApiArticleArticle extends Schema.CollectionType {
     draftAndPublish: true;
   };
   attributes: {
-    title: Attribute.String;
-    description: Attribute.Text &
+    title: Attribute.String & Attribute.Required;
+    subtitle: Attribute.Text &
       Attribute.SetMinMaxLength<{
         maxLength: 80;
       }>;
-    slug: Attribute.UID<'api::article.article', 'title'>;
-    cover: Attribute.Media;
-    author: Attribute.Relation<
+    short_description: Attribute.Text & Attribute.Required;
+    content_sections: Attribute.Relation<
       'api::article.article',
-      'manyToOne',
-      'api::author.author'
+      'oneToMany',
+      'api::content-section.content-section'
+    >;
+    medias: Attribute.Media;
+    topics: Attribute.Relation<
+      'api::article.article',
+      'manyToMany',
+      'api::topic.topic'
     >;
     category: Attribute.Relation<
       'api::article.article',
       'manyToOne',
       'api::category.category'
     >;
-    blocks: Attribute.DynamicZone<
-      ['shared.media', 'shared.quote', 'shared.rich-text', 'shared.slider']
+    content_classification: Attribute.Relation<
+      'api::article.article',
+      'manyToOne',
+      'api::content-classification.content-classification'
     >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
@@ -864,43 +845,6 @@ export interface ApiArticleArticle extends Schema.CollectionType {
   };
 }
 
-export interface ApiAuthorAuthor extends Schema.CollectionType {
-  collectionName: 'authors';
-  info: {
-    singularName: 'author';
-    pluralName: 'authors';
-    displayName: 'Author';
-    description: 'Create authors for your content';
-  };
-  options: {
-    draftAndPublish: false;
-  };
-  attributes: {
-    name: Attribute.String;
-    avatar: Attribute.Media;
-    email: Attribute.String;
-    articles: Attribute.Relation<
-      'api::author.author',
-      'oneToMany',
-      'api::article.article'
-    >;
-    createdAt: Attribute.DateTime;
-    updatedAt: Attribute.DateTime;
-    createdBy: Attribute.Relation<
-      'api::author.author',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-    updatedBy: Attribute.Relation<
-      'api::author.author',
-      'oneToOne',
-      'admin::user'
-    > &
-      Attribute.Private;
-  };
-}
-
 export interface ApiCategoryCategory extends Schema.CollectionType {
   collectionName: 'categories';
   info: {
@@ -913,14 +857,31 @@ export interface ApiCategoryCategory extends Schema.CollectionType {
     draftAndPublish: false;
   };
   attributes: {
-    name: Attribute.String;
-    slug: Attribute.UID;
+    title: Attribute.String & Attribute.Required;
+    slug: Attribute.UID & Attribute.Required;
+    short_description: Attribute.Text;
+    description: Attribute.Blocks;
     articles: Attribute.Relation<
       'api::category.category',
       'oneToMany',
       'api::article.article'
     >;
-    description: Attribute.Text;
+    icon: Attribute.Media & Attribute.Required;
+    sub_categories: Attribute.Relation<
+      'api::category.category',
+      'oneToMany',
+      'api::category.category'
+    >;
+    category_groups: Attribute.Relation<
+      'api::category.category',
+      'manyToMany',
+      'api::category-group.category-group'
+    >;
+    content_classification: Attribute.Relation<
+      'api::category.category',
+      'manyToOne',
+      'api::content-classification.content-classification'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
@@ -938,32 +899,339 @@ export interface ApiCategoryCategory extends Schema.CollectionType {
   };
 }
 
-export interface ApiGlobalGlobal extends Schema.SingleType {
-  collectionName: 'globals';
+export interface ApiCategoryGroupCategoryGroup extends Schema.CollectionType {
+  collectionName: 'category_groups';
   info: {
-    singularName: 'global';
-    pluralName: 'globals';
-    displayName: 'Global';
-    description: 'Define global settings';
+    singularName: 'category-group';
+    pluralName: 'category-groups';
+    displayName: 'Category Group';
+    description: '';
   };
   options: {
-    draftAndPublish: false;
+    draftAndPublish: true;
   };
   attributes: {
-    siteName: Attribute.String & Attribute.Required;
-    favicon: Attribute.Media;
-    siteDescription: Attribute.Text & Attribute.Required;
-    defaultSeo: Attribute.Component<'shared.seo'>;
+    title: Attribute.String;
+    description: Attribute.Text;
+    categories: Attribute.Relation<
+      'api::category-group.category-group',
+      'manyToMany',
+      'api::category.category'
+    >;
+    content_classification: Attribute.Relation<
+      'api::category-group.category-group',
+      'manyToOne',
+      'api::content-classification.content-classification'
+    >;
     createdAt: Attribute.DateTime;
     updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
     createdBy: Attribute.Relation<
-      'api::global.global',
+      'api::category-group.category-group',
       'oneToOne',
       'admin::user'
     > &
       Attribute.Private;
     updatedBy: Attribute.Relation<
-      'api::global.global',
+      'api::category-group.category-group',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiContentClassificationContentClassification
+  extends Schema.CollectionType {
+  collectionName: 'content_classifications';
+  info: {
+    singularName: 'content-classification';
+    pluralName: 'content-classifications';
+    displayName: 'Content Classification';
+    description: '';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    name: Attribute.String & Attribute.Required & Attribute.Unique;
+    slug: Attribute.UID<
+      'api::content-classification.content-classification',
+      'name'
+    > &
+      Attribute.Required;
+    description: Attribute.Text;
+    public: Attribute.Boolean;
+    regions: Attribute.Relation<
+      'api::content-classification.content-classification',
+      'manyToMany',
+      'api::region.region'
+    >;
+    platforms: Attribute.Relation<
+      'api::content-classification.content-classification',
+      'manyToMany',
+      'api::platform.platform'
+    >;
+    user_roles: Attribute.Relation<
+      'api::content-classification.content-classification',
+      'manyToMany',
+      'api::user-role.user-role'
+    >;
+    articles: Attribute.Relation<
+      'api::content-classification.content-classification',
+      'oneToMany',
+      'api::article.article'
+    >;
+    categories: Attribute.Relation<
+      'api::content-classification.content-classification',
+      'oneToMany',
+      'api::category.category'
+    >;
+    category_groups: Attribute.Relation<
+      'api::content-classification.content-classification',
+      'oneToMany',
+      'api::category-group.category-group'
+    >;
+    topics: Attribute.Relation<
+      'api::content-classification.content-classification',
+      'oneToMany',
+      'api::topic.topic'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::content-classification.content-classification',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::content-classification.content-classification',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiContentSectionContentSection extends Schema.CollectionType {
+  collectionName: 'content_sections';
+  info: {
+    singularName: 'content-section';
+    pluralName: 'content-sections';
+    displayName: 'Content Section';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    title: Attribute.String;
+    subtitle: Attribute.Text;
+    content_body: Attribute.Blocks;
+    medias: Attribute.Media;
+    article: Attribute.Relation<
+      'api::content-section.content-section',
+      'manyToOne',
+      'api::article.article'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::content-section.content-section',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::content-section.content-section',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiHomeHome extends Schema.SingleType {
+  collectionName: 'homes';
+  info: {
+    singularName: 'home';
+    pluralName: 'homes';
+    displayName: 'Home';
+    description: '';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    header: Attribute.DynamicZone<['shared.carrousel']>;
+    articles: Attribute.Relation<
+      'api::home.home',
+      'oneToMany',
+      'api::article.article'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<'api::home.home', 'oneToOne', 'admin::user'> &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<'api::home.home', 'oneToOne', 'admin::user'> &
+      Attribute.Private;
+  };
+}
+
+export interface ApiPlatformPlatform extends Schema.CollectionType {
+  collectionName: 'platforms';
+  info: {
+    singularName: 'platform';
+    pluralName: 'platforms';
+    displayName: 'Platform';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    name: Attribute.String & Attribute.Required & Attribute.Unique;
+    slug: Attribute.UID<'api::platform.platform', 'name'> & Attribute.Required;
+    icon: Attribute.Media;
+    content_classifications: Attribute.Relation<
+      'api::platform.platform',
+      'manyToMany',
+      'api::content-classification.content-classification'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::platform.platform',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::platform.platform',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiRegionRegion extends Schema.CollectionType {
+  collectionName: 'regions';
+  info: {
+    singularName: 'region';
+    pluralName: 'regions';
+    displayName: 'Region';
+    description: '';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    name: Attribute.String & Attribute.Required & Attribute.Unique;
+    slug: Attribute.UID<'api::region.region', 'name'> & Attribute.Required;
+    icon: Attribute.Media;
+    content_classifications: Attribute.Relation<
+      'api::region.region',
+      'manyToMany',
+      'api::content-classification.content-classification'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::region.region',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::region.region',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiTopicTopic extends Schema.CollectionType {
+  collectionName: 'topics';
+  info: {
+    singularName: 'topic';
+    pluralName: 'topics';
+    displayName: 'Topic';
+    description: '';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    title: Attribute.String & Attribute.Required;
+    short_description: Attribute.Text;
+    icon: Attribute.Media & Attribute.Required;
+    articles: Attribute.Relation<
+      'api::topic.topic',
+      'manyToMany',
+      'api::article.article'
+    >;
+    searchable: Attribute.Boolean &
+      Attribute.Required &
+      Attribute.DefaultTo<true>;
+    content_classification: Attribute.Relation<
+      'api::topic.topic',
+      'manyToOne',
+      'api::content-classification.content-classification'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::topic.topic',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::topic.topic',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+  };
+}
+
+export interface ApiUserRoleUserRole extends Schema.CollectionType {
+  collectionName: 'user_roles';
+  info: {
+    singularName: 'user-role';
+    pluralName: 'user-roles';
+    displayName: 'User Role';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    name: Attribute.String & Attribute.Required & Attribute.Unique;
+    slug: Attribute.UID<'api::user-role.user-role', 'name'>;
+    icon: Attribute.Media;
+    content_classifications: Attribute.Relation<
+      'api::user-role.user-role',
+      'manyToMany',
+      'api::content-classification.content-classification'
+    >;
+    createdAt: Attribute.DateTime;
+    updatedAt: Attribute.DateTime;
+    publishedAt: Attribute.DateTime;
+    createdBy: Attribute.Relation<
+      'api::user-role.user-role',
+      'oneToOne',
+      'admin::user'
+    > &
+      Attribute.Private;
+    updatedBy: Attribute.Relation<
+      'api::user-role.user-role',
       'oneToOne',
       'admin::user'
     > &
@@ -989,11 +1257,16 @@ declare module '@strapi/types' {
       'plugin::users-permissions.role': PluginUsersPermissionsRole;
       'plugin::users-permissions.user': PluginUsersPermissionsUser;
       'plugin::i18n.locale': PluginI18NLocale;
-      'api::about.about': ApiAboutAbout;
       'api::article.article': ApiArticleArticle;
-      'api::author.author': ApiAuthorAuthor;
       'api::category.category': ApiCategoryCategory;
-      'api::global.global': ApiGlobalGlobal;
+      'api::category-group.category-group': ApiCategoryGroupCategoryGroup;
+      'api::content-classification.content-classification': ApiContentClassificationContentClassification;
+      'api::content-section.content-section': ApiContentSectionContentSection;
+      'api::home.home': ApiHomeHome;
+      'api::platform.platform': ApiPlatformPlatform;
+      'api::region.region': ApiRegionRegion;
+      'api::topic.topic': ApiTopicTopic;
+      'api::user-role.user-role': ApiUserRoleUserRole;
     }
   }
 }

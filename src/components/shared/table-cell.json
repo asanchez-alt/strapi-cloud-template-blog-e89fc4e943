@@ -1,0 +1,16 @@
+{
+  "collectionName": "components_shared_table_cells",
+  "info": {
+    "displayName": "Table Cell",
+    "description": ""
+  },
+  "options": {},
+  "attributes": {
+    "label": {
+      "type": "string"
+    },
+    "order": {
+      "type": "integer"
+    }
+  }
+}
